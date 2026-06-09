@@ -1,9 +1,11 @@
-import type { Dispatch } from 'react'
+import { useState, type Dispatch } from 'react'
 import type { DocumentAction } from '../hooks/useDocument'
 import type { BackgroundTheme, DocumentState, FontFamily, HighlightColor } from '../types'
 import { getActiveSlide } from '../types'
 import { LessonLibrary } from './SlideUI'
 import { TimerWidget } from './overlays'
+
+type ToolboxTab = 'text' | 'present' | 'more'
 
 const HIGHLIGHT_COLORS: { color: HighlightColor; label: string }[] = [
   { color: 'yellow', label: 'Key idea' },
@@ -22,10 +24,34 @@ const FONTS: { id: FontFamily; label: string }[] = [
 ]
 
 const BACKGROUNDS: { id: BackgroundTheme; label: string }[] = [
-  { id: 'purple', label: 'Purple (default)' },
-  { id: 'midnight', label: 'Midnight black' },
-  { id: 'white', label: 'Clean white' },
+  { id: 'purple', label: 'Purple' },
+  { id: 'midnight', label: 'Midnight' },
+  { id: 'white', label: 'White' },
   { id: 'chalk', label: 'Chalkboard' },
+]
+
+const TABS: { id: ToolboxTab; label: string }[] = [
+  { id: 'text', label: 'Text' },
+  { id: 'present', label: 'Present' },
+  { id: 'more', label: 'More' },
+]
+
+const PRESENT_TOOLS: {
+  label: string
+  glyph: string
+  hint: string
+  active: (s: DocumentState) => boolean
+  action: DocumentAction
+}[] = [
+  { label: 'Reveal', glyph: '▦', hint: 'Click to reveal sentences', active: (s) => s.revealMode, action: { type: 'TOGGLE_REVEAL' } },
+  { label: 'Focus', glyph: '◎', hint: 'Click a sentence — dims everything else', active: (s) => s.focusLine, action: { type: 'TOGGLE_FOCUS_LINE' } },
+  { label: 'Spot', glyph: '◉', hint: 'Cursor spotlight', active: (s) => s.spotlight, action: { type: 'TOGGLE_SPOTLIGHT' } },
+  { label: 'Laser', glyph: '•', hint: 'Red laser dot', active: (s) => s.laserPointer, action: { type: 'TOGGLE_LASER' } },
+  { label: 'Pen', glyph: '✎', hint: 'Draw on screen', active: (s) => s.penTool, action: { type: 'TOGGLE_PEN' } },
+  { label: 'Zoom', glyph: '⊕', hint: 'Zoom under cursor', active: (s) => s.magnifier, action: { type: 'TOGGLE_MAGNIFIER' } },
+  { label: 'Compare', glyph: '⚌', hint: 'Side-by-side texts', active: (s) => s.compareMode, action: { type: 'TOGGLE_COMPARE' } },
+  { label: 'Lines', glyph: '#', hint: 'Line numbers for “look at line 3”', active: (s) => s.showLineNumbers, action: { type: 'TOGGLE_LINE_NUMBERS' } },
+  { label: 'Split', glyph: '⊞', hint: 'Text left, media right', active: (s) => s.splitLayout, action: { type: 'TOGGLE_SPLIT_LAYOUT' } },
 ]
 
 interface ToolboxProps {
@@ -77,209 +103,285 @@ export function Toolbox({
   timer,
   copied,
 }: ToolboxProps) {
+  const [tab, setTab] = useState<ToolboxTab>('text')
   const slide = getActiveSlide(state)
   const editingCompare = state.compareMode && state.compareSide === 'compare'
 
   return (
     <aside className="toolbox">
-      <div className="toolbox__brand">
-        <span className="toolbox__logo">📖</span>
-        <h1>Reader</h1>
+      <div className="toolbox__header">
+        <div className="toolbox__brand">
+          <span className="toolbox__logo">📖</span>
+          <h1>Reader</h1>
+        </div>
+        <nav className="toolbox__tabs" aria-label="Toolbox sections">
+          {TABS.map(({ id, label }) => (
+            <button
+              key={id}
+              type="button"
+              className={`toolbox__tab ${tab === id ? 'toolbox__tab--active' : ''}`}
+              onClick={() => setTab(id)}
+            >
+              {label}
+            </button>
+          ))}
+        </nav>
       </div>
 
-      <section className="toolbox__section">
-        <h2>Passages</h2>
-        <p className="toolbox__hint">Use tabs above the stage. Double-click a tab to rename.</p>
-        <button type="button" className="btn btn--full" onClick={() => dispatch({ type: 'ADD_SLIDE' })}>
-          + New passage
-        </button>
-      </section>
-
-      <section className="toolbox__section">
-        <h2>Text {state.compareMode && (editingCompare ? '(compare)' : '(original)')}</h2>
-        {state.compareMode && (
-          <div className="toolbox__row">
-            <button
-              type="button"
-              className={`btn btn--sm ${!editingCompare ? 'btn--primary' : ''}`}
-              onClick={() => dispatch({ type: 'SET_COMPARE_SIDE', side: 'primary' })}
-            >
-              Original
-            </button>
-            <button
-              type="button"
-              className={`btn btn--sm ${editingCompare ? 'btn--primary' : ''}`}
-              onClick={() => dispatch({ type: 'SET_COMPARE_SIDE', side: 'compare' })}
-            >
-              Compare
-            </button>
-          </div>
-        )}
-        <textarea
-          className="paste-area"
-          placeholder={editingCompare ? 'Paste comparison text…' : 'Paste your paragraph here…'}
-          value={editingCompare ? slide.compareText : slide.text}
-          onChange={(e) =>
-            onPasteText(e.target.value, editingCompare ? 'compare' : 'primary')
-          }
-          rows={4}
-        />
-        <div className="toolbox__row">
-          <button type="button" className="btn" onClick={onCopy}>
-            {copied ? '✓ Copied' : 'Copy'}
-          </button>
-          <button type="button" className="btn btn--ghost" onClick={onUndo} disabled={!canUndo}>
-            Undo
-          </button>
-        </div>
-      </section>
-
-      <section className="toolbox__section">
-        <h2>Lesson library</h2>
-        <LessonLibrary state={state} onLoad={onLoadLesson} />
-      </section>
-
-      <section className="toolbox__section">
-        <h2>Highlight</h2>
-        <p className="toolbox__hint">Select text, then pick a color</p>
-        <div className="color-picker">
-          {HIGHLIGHT_COLORS.map(({ color, label }) => (
-            <button
-              key={color}
-              type="button"
-              className={`color-swatch color-swatch--${color} ${activeColor === color ? 'active' : ''}`}
-              title={label}
-              aria-label={label}
-              onClick={() => onColorChange(color)}
+      <div className="toolbox__body">
+        {tab === 'text' && (
+          <div className="toolbox__panel">
+            {state.compareMode && (
+              <div className="toolbox__seg">
+                <button
+                  type="button"
+                  className={`toolbox__seg-btn ${!editingCompare ? 'toolbox__seg-btn--active' : ''}`}
+                  onClick={() => dispatch({ type: 'SET_COMPARE_SIDE', side: 'primary' })}
+                >
+                  Original
+                </button>
+                <button
+                  type="button"
+                  className={`toolbox__seg-btn ${editingCompare ? 'toolbox__seg-btn--active' : ''}`}
+                  onClick={() => dispatch({ type: 'SET_COMPARE_SIDE', side: 'compare' })}
+                >
+                  Compare
+                </button>
+              </div>
+            )}
+            <textarea
+              className="paste-area paste-area--compact"
+              placeholder={editingCompare ? 'Paste comparison text…' : 'Paste your paragraph…'}
+              value={editingCompare ? slide.compareText : slide.text}
+              onChange={(e) =>
+                onPasteText(e.target.value, editingCompare ? 'compare' : 'primary')
+              }
+              rows={3}
             />
-          ))}
-        </div>
-        <ToolToggle
-          label={`Answer key mode ${state.answerKeyMode ? 'ON' : ''}`}
-          active={state.answerKeyMode}
-          onClick={() => dispatch({ type: 'TOGGLE_ANSWER_KEY_MODE' })}
-          hint="New highlights hidden until you reveal answers"
-        />
-        <div className="toolbox__row">
-          <ToolToggle
-            label={state.answersHidden ? 'Show answers' : 'Hide answers'}
-            active={!state.answersHidden}
-            onClick={() => dispatch({ type: 'TOGGLE_ANSWERS_HIDDEN' })}
-            hint="Toggle answer-key highlights"
-          />
-          <button
-            type="button"
-            className="btn btn--ghost btn--sm"
-            onClick={() =>
-              dispatch({ type: 'CLEAR_HIGHLIGHTS', side: editingCompare ? 'compare' : 'primary' })
-            }
-          >
-            Clear
-          </button>
-        </div>
-      </section>
-
-      <section className="toolbox__section">
-        <h2>Present</h2>
-        <div className="toolbox__grid">
-          <ToolToggle label="Reveal" active={state.revealMode} onClick={() => dispatch({ type: 'TOGGLE_REVEAL' })} hint="Click to reveal sentences" />
-          <ToolToggle label="Focus sentence" active={state.focusLine} onClick={() => dispatch({ type: 'TOGGLE_FOCUS_LINE' })} hint="Click a sentence — dims everything else" />
-          <ToolToggle label="Spotlight" active={state.spotlight} onClick={() => dispatch({ type: 'TOGGLE_SPOTLIGHT' })} hint="Cursor spotlight" />
-          <ToolToggle label="Laser" active={state.laserPointer} onClick={() => dispatch({ type: 'TOGGLE_LASER' })} hint="Red laser dot" />
-          <ToolToggle label="Pen" active={state.penTool} onClick={() => dispatch({ type: 'TOGGLE_PEN' })} hint="Draw on screen" />
-          <ToolToggle label="Magnifier" active={state.magnifier} onClick={() => dispatch({ type: 'TOGGLE_MAGNIFIER' })} hint="Zoom under cursor" />
-          <ToolToggle label="Compare" active={state.compareMode} onClick={() => dispatch({ type: 'TOGGLE_COMPARE' })} hint="Side-by-side texts" />
-          <ToolToggle label={`Line #s${state.showLineNumbers ? ' ✓' : ''}`} active={state.showLineNumbers} onClick={() => dispatch({ type: 'TOGGLE_LINE_NUMBERS' })} hint="Purple numbers on the left — great for 'look at line 3'" />
-          <ToolToggle label="Split view" active={state.splitLayout} onClick={() => dispatch({ type: 'TOGGLE_SPLIT_LAYOUT' })} hint="Text left, media right" />
-          <ToolToggle label="Clean view" active={state.presentationMode} onClick={() => dispatch({ type: 'TOGGLE_PRESENTATION' })} hint="Hide toolbox" />
-        </div>
-        {state.revealMode && (
-          <div className="toolbox__row">
-            <button type="button" className="btn btn--sm" onClick={() => dispatch({ type: 'REVEAL_ALL' })}>Reveal all</button>
-            <button type="button" className="btn btn--sm btn--ghost" onClick={() => dispatch({ type: 'RESET_REVEAL' })}>Reset</button>
+            <div className="toolbox__toolbar">
+              <button type="button" className="btn btn--sm" onClick={onCopy}>
+                {copied ? '✓ Copied' : 'Copy'}
+              </button>
+              <button type="button" className="btn btn--sm btn--ghost" onClick={onUndo} disabled={!canUndo}>
+                Undo
+              </button>
+              <button type="button" className="btn btn--sm btn--ghost" onClick={() => dispatch({ type: 'ADD_SLIDE' })}>
+                + Passage
+              </button>
+            </div>
+            <details className="toolbox__fold">
+              <summary>Lesson library</summary>
+              <LessonLibrary state={state} onLoad={onLoadLesson} />
+            </details>
           </div>
         )}
-        <div className="toolbox__row" style={{ marginTop: '0.5rem' }}>
-          <button type="button" className="btn btn--sm btn--ghost" onClick={onFreeze}>
-            {state.frozen ? 'Unfreeze' : 'Freeze frame'}
-          </button>
-          <button
-            type="button"
-            className="btn btn--sm btn--ghost"
-            onClick={onClearPen}
-          >
-            Clear pen
-          </button>
-        </div>
-      </section>
 
-      <section className="toolbox__section">
-        <h2>Export</h2>
-        <div className="toolbox__row">
-          <button type="button" className="btn btn--sm" onClick={onExportPng}>PNG</button>
-          <button type="button" className="btn btn--sm" onClick={onExportPdf}>PDF</button>
-        </div>
-      </section>
+        {tab === 'present' && (
+          <div className="toolbox__panel">
+            <p className="toolbox__micro">Select text, then pick a color</p>
+            <div className="color-picker color-picker--row">
+              {HIGHLIGHT_COLORS.map(({ color, label }) => (
+                <button
+                  key={color}
+                  type="button"
+                  className={`color-swatch color-swatch--${color} ${activeColor === color ? 'active' : ''}`}
+                  title={label}
+                  aria-label={label}
+                  onClick={() => onColorChange(color)}
+                />
+              ))}
+            </div>
+            <div className="toolbox__chips">
+              <ChipToggle
+                label="Answer key"
+                active={state.answerKeyMode}
+                onClick={() => dispatch({ type: 'TOGGLE_ANSWER_KEY_MODE' })}
+                hint="New highlights hidden until you reveal answers"
+              />
+              <ChipToggle
+                label={state.answersHidden ? 'Show answers' : 'Hide answers'}
+                active={!state.answersHidden}
+                onClick={() => dispatch({ type: 'TOGGLE_ANSWERS_HIDDEN' })}
+                hint="Toggle answer-key highlights"
+              />
+              <button
+                type="button"
+                className="chip chip--ghost"
+                onClick={() =>
+                  dispatch({ type: 'CLEAR_HIGHLIGHTS', side: editingCompare ? 'compare' : 'primary' })
+                }
+              >
+                Clear all
+              </button>
+            </div>
 
-      <section className="toolbox__section">
-        <h2>Look</h2>
-        <label className="toolbox__label">
-          Background
-          <select
-            value={state.backgroundTheme}
-            onChange={(e) =>
-              dispatch({ type: 'SET_BACKGROUND', backgroundTheme: e.target.value as BackgroundTheme })
-            }
-          >
-            {BACKGROUNDS.map((b) => (
-              <option key={b.id} value={b.id}>{b.label}</option>
-            ))}
-          </select>
-        </label>
-        <label className="toolbox__label">
-          Font
-          <select
-            value={state.font}
-            onChange={(e) => dispatch({ type: 'SET_FONT', font: e.target.value as FontFamily })}
-          >
-            {FONTS.map((f) => (
-              <option key={f.id} value={f.id}>{f.label}</option>
-            ))}
-          </select>
-        </label>
-        <label className="toolbox__label">
-          Size — {state.fontSize}px
-          <input type="range" min={18} max={48} value={state.fontSize} onChange={(e) => dispatch({ type: 'SET_FONT_SIZE', fontSize: Number(e.target.value) })} />
-        </label>
-        <label className="toolbox__label">
-          Spacing — {state.lineHeight.toFixed(1)}
-          <input type="range" min={1.2} max={2.4} step={0.1} value={state.lineHeight} onChange={(e) => dispatch({ type: 'SET_LINE_HEIGHT', lineHeight: Number(e.target.value) })} />
-        </label>
-      </section>
+            <div className="toolbox__divider" />
 
-      <section className="toolbox__section">
-        <h2>Media & notes</h2>
-        <button type="button" className="btn btn--full" onClick={onAddImage}>+ Add image</button>
-        <button type="button" className="btn btn--full" style={{ marginTop: '0.35rem' }} onClick={onAddSticky}>
-          + Sticky question
+            <div className="tool-icon-grid">
+              {PRESENT_TOOLS.map(({ label, glyph, hint, active, action }) => (
+                <IconTool
+                  key={label}
+                  glyph={glyph}
+                  label={label}
+                  hint={hint}
+                  active={active(state)}
+                  onClick={() => dispatch(action)}
+                />
+              ))}
+            </div>
+            {state.revealMode && (
+              <div className="toolbox__toolbar">
+                <button type="button" className="btn btn--sm" onClick={() => dispatch({ type: 'REVEAL_ALL' })}>
+                  Reveal all
+                </button>
+                <button type="button" className="btn btn--sm btn--ghost" onClick={() => dispatch({ type: 'RESET_REVEAL' })}>
+                  Reset
+                </button>
+              </div>
+            )}
+            <div className="toolbox__toolbar">
+              <button type="button" className="btn btn--sm btn--ghost" onClick={onFreeze}>
+                {state.frozen ? 'Unfreeze' : 'Freeze'}
+              </button>
+              <button type="button" className="btn btn--sm btn--ghost" onClick={onClearPen}>
+                Clear pen
+              </button>
+            </div>
+          </div>
+        )}
+
+        {tab === 'more' && (
+          <div className="toolbox__panel toolbox__panel--stack">
+            <details className="toolbox__fold toolbox__fold--open" open>
+              <summary>Look</summary>
+              <div className="toolbox__pair">
+                <label className="toolbox__mini">
+                  Theme
+                  <select
+                    value={state.backgroundTheme}
+                    onChange={(e) =>
+                      dispatch({ type: 'SET_BACKGROUND', backgroundTheme: e.target.value as BackgroundTheme })
+                    }
+                  >
+                    {BACKGROUNDS.map((b) => (
+                      <option key={b.id} value={b.id}>{b.label}</option>
+                    ))}
+                  </select>
+                </label>
+                <label className="toolbox__mini">
+                  Font
+                  <select
+                    value={state.font}
+                    onChange={(e) => dispatch({ type: 'SET_FONT', font: e.target.value as FontFamily })}
+                  >
+                    {FONTS.map((f) => (
+                      <option key={f.id} value={f.id}>{f.label}</option>
+                    ))}
+                  </select>
+                </label>
+              </div>
+              <label className="toolbox__mini">
+                Size — {state.fontSize}px
+                <input
+                  type="range"
+                  min={18}
+                  max={48}
+                  value={state.fontSize}
+                  onChange={(e) => dispatch({ type: 'SET_FONT_SIZE', fontSize: Number(e.target.value) })}
+                />
+              </label>
+              <label className="toolbox__mini">
+                Spacing — {state.lineHeight.toFixed(1)}
+                <input
+                  type="range"
+                  min={1.2}
+                  max={2.4}
+                  step={0.1}
+                  value={state.lineHeight}
+                  onChange={(e) => dispatch({ type: 'SET_LINE_HEIGHT', lineHeight: Number(e.target.value) })}
+                />
+              </label>
+            </details>
+
+            <details className="toolbox__fold">
+              <summary>Media & notes</summary>
+              <div className="toolbox__toolbar">
+                <button type="button" className="btn btn--sm btn--full" onClick={onAddImage}>
+                  + Image
+                </button>
+                <button type="button" className="btn btn--sm btn--full" onClick={onAddSticky}>
+                  + Sticky
+                </button>
+              </div>
+            </details>
+
+            <details className="toolbox__fold">
+              <summary>Timer</summary>
+              <TimerWidget
+                compact
+                seconds={timer.seconds}
+                running={timer.running}
+                onToggle={timer.toggle}
+                onReset={timer.reset}
+                onSetDuration={timer.setDuration}
+              />
+            </details>
+
+            <details className="toolbox__fold">
+              <summary>Export & vocab</summary>
+              <div className="toolbox__toolbar">
+                <button type="button" className="btn btn--sm" onClick={onExportPng}>PNG</button>
+                <button type="button" className="btn btn--sm" onClick={onExportPdf}>PDF</button>
+                <button type="button" className="btn btn--sm btn--ghost" onClick={onToggleVocab}>
+                  {showVocab ? 'Hide vocab' : 'Vocab'}
+                </button>
+              </div>
+            </details>
+          </div>
+        )}
+      </div>
+
+      <div className="toolbox__footer">
+        <button
+          type="button"
+          className={`btn btn--full ${state.presentationMode ? 'btn--primary' : ''}`}
+          onClick={() => dispatch({ type: 'TOGGLE_PRESENTATION' })}
+        >
+          {state.presentationMode ? 'Exit clean view' : '⛶ Clean view'}
         </button>
-      </section>
-
-      <section className="toolbox__section">
-        <h2>Timer</h2>
-        <TimerWidget seconds={timer.seconds} running={timer.running} onToggle={timer.toggle} onReset={timer.reset} onSetDuration={timer.setDuration} />
-      </section>
-
-      <section className="toolbox__section">
-        <button type="button" className="btn btn--ghost btn--full" onClick={onToggleVocab}>
-          {showVocab ? 'Hide vocabulary' : 'Show vocabulary'}
-        </button>
-      </section>
+      </div>
     </aside>
   )
 }
 
-function ToolToggle({
+function IconTool({
+  glyph,
+  label,
+  active,
+  onClick,
+  hint,
+}: {
+  glyph: string
+  label: string
+  active: boolean
+  onClick: () => void
+  hint: string
+}) {
+  return (
+    <button
+      type="button"
+      className={`tool-icon ${active ? 'tool-icon--active' : ''}`}
+      onClick={onClick}
+      title={hint}
+      aria-label={label}
+    >
+      <span className="tool-icon__glyph">{glyph}</span>
+      <span className="tool-icon__label">{label}</span>
+    </button>
+  )
+}
+
+function ChipToggle({
   label,
   active,
   onClick,
@@ -288,10 +390,15 @@ function ToolToggle({
   label: string
   active: boolean
   onClick: () => void
-  hint: string
+  hint?: string
 }) {
   return (
-    <button type="button" className={`tool-toggle ${active ? 'tool-toggle--active' : ''}`} onClick={onClick} title={hint}>
+    <button
+      type="button"
+      className={`chip ${active ? 'chip--active' : ''}`}
+      onClick={onClick}
+      title={hint}
+    >
       {label}
     </button>
   )

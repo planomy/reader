@@ -157,19 +157,21 @@ export function TimerWidget({
   onToggle,
   onReset,
   onSetDuration,
+  compact = false,
 }: {
   seconds: number
   running: boolean
   onToggle: () => void
   onReset: () => void
   onSetDuration: (seconds: number) => void
+  compact?: boolean
 }) {
   const mins = Math.floor(seconds / 60)
   const secs = seconds % 60
   const display = `${mins}:${secs.toString().padStart(2, '0')}`
 
   return (
-    <div className="timer-widget">
+    <div className={`timer-widget ${compact ? 'timer-widget--compact' : ''}`}>
       <div className="timer-widget__display">{display}</div>
       <div className="timer-widget__presets">
         {[1, 2, 5].map((m) => (
