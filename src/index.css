@@ -165,7 +165,7 @@ body {
 
 .toolbox-shell {
   flex-shrink: 0;
-  width: 316px;
+  width: 253px;
   padding: 14px 0 14px 14px;
   display: flex;
   align-items: stretch;
@@ -196,7 +196,21 @@ body {
   flex: 1;
   min-height: 0;
   overflow-y: auto;
+  overflow-x: hidden;
   padding-right: 2px;
+}
+
+.toolbox__body::-webkit-scrollbar {
+  width: 4px;
+}
+
+.toolbox__body::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.toolbox__body::-webkit-scrollbar-thumb {
+  background: rgba(255, 255, 255, 0.22);
+  border-radius: 4px;
 }
 
 .toolbox__tabs {
@@ -268,6 +282,7 @@ body {
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
+  min-width: 0;
 }
 
 .toolbox__panel--stack {
