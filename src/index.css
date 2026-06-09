@@ -396,21 +396,16 @@ body {
 .toolbox__brand {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
   margin-bottom: 0;
+  padding: 0.15rem 0 0.25rem;
 }
 
-.toolbox__logo { font-size: 1.5rem; }
-
-.toolbox__brand h1 {
-  margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
-  font-family: 'Fredoka', sans-serif;
-  background: linear-gradient(135deg, var(--accent), #e879f9);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
+.toolbox__logo-img {
+  height: 2.75rem;
+  width: auto;
+  max-width: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .toolbox__section {

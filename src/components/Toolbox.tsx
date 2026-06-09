@@ -111,8 +111,11 @@ export function Toolbox({
     <aside className="toolbox">
       <div className="toolbox__header">
         <div className="toolbox__brand">
-          <span className="toolbox__logo">📖</span>
-          <h1>Reader</h1>
+          <img
+            src={`${import.meta.env.BASE_URL}logo.png`}
+            alt="Reader"
+            className="toolbox__logo-img"
+          />
         </div>
         <nav className="toolbox__tabs" aria-label="Toolbox sections">
           {TABS.map(({ id, label }) => (
