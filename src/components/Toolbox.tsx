@@ -352,6 +352,7 @@ export function Toolbox({
         >
           {state.presentationMode ? 'Exit clean view' : '⛶ Clean view'}
         </button>
+        <p className="toolbox__credit">Created by Mr C 2026</p>
       </div>
     </aside>
   )

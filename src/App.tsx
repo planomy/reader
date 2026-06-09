@@ -9,6 +9,7 @@ import {
   VocabPanel,
 } from './components/overlays'
 import { SlideTabs, SplitPane } from './components/SlideUI'
+import { StageHero } from './components/StageHero'
 import { PenLayer } from './components/PenLayer'
 import { PresentationBar } from './components/PresentationBar'
 import { StickyNotesLayer } from './components/StickyNotes'
@@ -249,14 +250,22 @@ export default function App() {
         )}
 
         {!state.presentationMode && (
-          <SlideTabs
-            slides={state.slides.map((s) => ({ id: s.id, title: s.title }))}
-            activeId={state.activeSlideId}
-            onSelect={(id) => dispatch({ type: 'SET_ACTIVE_SLIDE', id })}
-            onAdd={() => dispatch({ type: 'ADD_SLIDE' })}
-            onRemove={(id) => dispatch({ type: 'REMOVE_SLIDE', id })}
-            onRename={(id, title) => dispatch({ type: 'RENAME_SLIDE', id, title })}
-          />
+          <>
+            <StageHero
+              title={slide.title}
+              slideIndex={state.slides.findIndex((s) => s.id === state.activeSlideId)}
+              slideCount={state.slides.length}
+              text={slide.text}
+            />
+            <SlideTabs
+              slides={state.slides.map((s) => ({ id: s.id, title: s.title }))}
+              activeId={state.activeSlideId}
+              onSelect={(id) => dispatch({ type: 'SET_ACTIVE_SLIDE', id })}
+              onAdd={() => dispatch({ type: 'ADD_SLIDE' })}
+              onRemove={(id) => dispatch({ type: 'REMOVE_SLIDE', id })}
+              onRename={(id, title) => dispatch({ type: 'RENAME_SLIDE', id, title })}
+            />
+          </>
         )}
 
         <div ref={stageRef} className="stage__capture">
