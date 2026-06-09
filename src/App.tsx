@@ -12,11 +12,13 @@ import { SlideTabs, SplitPane } from './components/SlideUI'
 import { StageHero } from './components/StageHero'
 import { PenLayer } from './components/PenLayer'
 import { PresentationBar } from './components/PresentationBar'
+import { ShortcutsOverlay } from './components/ShortcutsOverlay'
 import { StickyNotesLayer } from './components/StickyNotes'
 import { TextCanvas } from './components/TextCanvas'
 import { Toolbox } from './components/Toolbox'
 import { WordPopup } from './components/WordPopup'
 import { useDocument } from './hooks/useDocument'
+import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import type { FontFamily, HighlightColor, WordAnnotation } from './types'
 import { getActiveSlide } from './types'
 import { captureStage, exportStagePdf, exportStagePng } from './utils/export'
@@ -52,6 +54,7 @@ export default function App() {
   const [showVocab, setShowVocab] = useState(false)
   const [copied, setCopied] = useState(false)
   const [showImages, setShowImages] = useState(slide.images.length > 0)
+  const [showShortcuts, setShowShortcuts] = useState(false)
 
   const activeSide = state.compareMode && state.compareSide === 'compare' ? 'compare' : 'primary'
   const annotations = activeSide === 'compare' ? slide.compareAnnotations : slide.annotations
@@ -115,6 +118,30 @@ export default function App() {
   }
 
   const handleClearPen = () => setPenClear((n) => n + 1)
+
+  const handleEscape = useCallback(() => {
+    if (showShortcuts) {
+      setShowShortcuts(false)
+      return
+    }
+    if (popup) {
+      setPopup(null)
+      return
+    }
+    if (state.presentationMode) {
+      dispatch({ type: 'TOGGLE_PRESENTATION' })
+    }
+  }, [showShortcuts, popup, state.presentationMode, dispatch])
+
+  useKeyboardShortcuts({
+    dispatch,
+    canUndo,
+    onUndo: undo,
+    onClearPen: handleClearPen,
+    penTool: state.penTool,
+    onEscape: handleEscape,
+    onToggleHelp: () => setShowShortcuts((v) => !v),
+  })
 
   const handleAddSticky = () => {
     dispatch({
@@ -319,6 +346,8 @@ export default function App() {
           }}
         />
       )}
+
+      <ShortcutsOverlay open={showShortcuts} onClose={() => setShowShortcuts(false)} />
     </div>
   )
 }

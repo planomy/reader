@@ -4,6 +4,7 @@ import type { BackgroundTheme, DocumentState, FontFamily, HighlightColor } from 
 import { getActiveSlide } from '../types'
 import { LessonLibrary } from './SlideUI'
 import { TimerWidget } from './overlays'
+import { KEYBOARD_SHORTCUTS } from '../hooks/useKeyboardShortcuts'
 
 type ToolboxTab = 'text' | 'present' | 'more'
 
@@ -43,14 +44,14 @@ const PRESENT_TOOLS: {
   active: (s: DocumentState) => boolean
   action: DocumentAction
 }[] = [
-  { label: 'Reveal', glyph: '▦', hint: 'Click to reveal sentences', active: (s) => s.revealMode, action: { type: 'TOGGLE_REVEAL' } },
-  { label: 'Focus', glyph: '◎', hint: 'Click a sentence — dims everything else', active: (s) => s.focusLine, action: { type: 'TOGGLE_FOCUS_LINE' } },
-  { label: 'Spot', glyph: '◉', hint: 'Cursor spotlight', active: (s) => s.spotlight, action: { type: 'TOGGLE_SPOTLIGHT' } },
-  { label: 'Laser', glyph: '•', hint: 'Red laser dot', active: (s) => s.laserPointer, action: { type: 'TOGGLE_LASER' } },
-  { label: 'Pen', glyph: '✎', hint: 'Draw on screen', active: (s) => s.penTool, action: { type: 'TOGGLE_PEN' } },
-  { label: 'Zoom', glyph: '⊕', hint: 'Zoom under cursor', active: (s) => s.magnifier, action: { type: 'TOGGLE_MAGNIFIER' } },
+  { label: 'Reveal', glyph: '▦', hint: 'Click to reveal sentences (R)', active: (s) => s.revealMode, action: { type: 'TOGGLE_REVEAL' } },
+  { label: 'Focus', glyph: '◎', hint: 'Click a sentence — dims everything else (F)', active: (s) => s.focusLine, action: { type: 'TOGGLE_FOCUS_LINE' } },
+  { label: 'Spot', glyph: '◉', hint: 'Cursor spotlight (S)', active: (s) => s.spotlight, action: { type: 'TOGGLE_SPOTLIGHT' } },
+  { label: 'Laser', glyph: '•', hint: 'Red laser dot (L)', active: (s) => s.laserPointer, action: { type: 'TOGGLE_LASER' } },
+  { label: 'Pen', glyph: '✎', hint: 'Draw on screen (P)', active: (s) => s.penTool, action: { type: 'TOGGLE_PEN' } },
+  { label: 'Zoom', glyph: '⊕', hint: 'Zoom under cursor (Z)', active: (s) => s.magnifier, action: { type: 'TOGGLE_MAGNIFIER' } },
   { label: 'Compare', glyph: '⚌', hint: 'Side-by-side texts', active: (s) => s.compareMode, action: { type: 'TOGGLE_COMPARE' } },
-  { label: 'Lines', glyph: '#', hint: 'Line numbers for “look at line 3”', active: (s) => s.showLineNumbers, action: { type: 'TOGGLE_LINE_NUMBERS' } },
+  { label: 'Lines', glyph: '#', hint: 'Line numbers (N)', active: (s) => s.showLineNumbers, action: { type: 'TOGGLE_LINE_NUMBERS' } },
   { label: 'Split', glyph: '⊞', hint: 'Text left, media right', active: (s) => s.splitLayout, action: { type: 'TOGGLE_SPLIT_LAYOUT' } },
 ]
 
@@ -250,6 +251,18 @@ export function Toolbox({
                 Clear pen
               </button>
             </div>
+
+            <details className="toolbox__fold">
+              <summary>Keyboard shortcuts (?)</summary>
+              <dl className="shortcuts-list shortcuts-list--compact">
+                {KEYBOARD_SHORTCUTS.map(({ keys, label }) => (
+                  <div key={keys} className="shortcuts-list__row">
+                    <dt><kbd>{keys}</kbd></dt>
+                    <dd>{label}</dd>
+                  </div>
+                ))}
+              </dl>
+            </details>
           </div>
         )}
 
