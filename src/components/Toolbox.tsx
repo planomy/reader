@@ -170,41 +170,48 @@ export function Toolbox({
 
   const renderPresentPanel = () => (
     <div className="toolbox__panel">
-      <p className="toolbox__micro">Select text, then pick a color</p>
-      <div className="color-picker color-picker--row">
-        {HIGHLIGHT_COLORS.map(({ color, label }) => (
-          <button
-            key={color}
-            type="button"
-            className={`color-swatch color-swatch--${color} ${activeColor === color ? 'active' : ''}`}
-            title={label}
-            aria-label={label}
-            onClick={() => onColorChange(color)}
+      <div className="toolbox__highlight-kit">
+        <p className="toolbox__micro">Highlight colors</p>
+        <div className="color-picker color-picker--row">
+          {HIGHLIGHT_COLORS.map(({ color, label }) => (
+            <button
+              key={color}
+              type="button"
+              className={`color-swatch-btn ${activeColor === color ? 'color-swatch-btn--active' : ''}`}
+              title={label}
+              aria-label={label}
+              onClick={() => onColorChange(color)}
+            >
+              <span className={`color-swatch color-swatch--${color}`} />
+              <span className="color-swatch-btn__label">{label.split(' ')[0]}</span>
+            </button>
+          ))}
+        </div>
+
+        <p className="toolbox__micro toolbox__micro--spaced">Answer key</p>
+        <div className="toolbox__chip-row">
+          <ChipToggle
+            label="Answer key"
+            active={state.answerKeyMode}
+            onClick={() => dispatch({ type: 'TOGGLE_ANSWER_KEY_MODE' })}
+            hint="New highlights hidden until you reveal answers"
           />
-        ))}
-      </div>
-      <div className="toolbox__chips">
-        <ChipToggle
-          label="Answer key"
-          active={state.answerKeyMode}
-          onClick={() => dispatch({ type: 'TOGGLE_ANSWER_KEY_MODE' })}
-          hint="New highlights hidden until you reveal answers"
-        />
-        <ChipToggle
-          label={state.answersHidden ? 'Show answers' : 'Hide answers'}
-          active={!state.answersHidden}
-          onClick={() => dispatch({ type: 'TOGGLE_ANSWERS_HIDDEN' })}
-          hint="Toggle answer-key highlights"
-        />
-        <button
-          type="button"
-          className="chip chip--ghost"
-          onClick={() =>
-            dispatch({ type: 'CLEAR_HIGHLIGHTS', side: editingCompare ? 'compare' : 'primary' })
-          }
-        >
-          Clear all
-        </button>
+          <ChipToggle
+            label={state.answersHidden ? 'Show answers' : 'Hide answers'}
+            active={!state.answersHidden}
+            onClick={() => dispatch({ type: 'TOGGLE_ANSWERS_HIDDEN' })}
+            hint="Toggle answer-key highlights"
+          />
+          <button
+            type="button"
+            className="chip chip--ghost"
+            onClick={() =>
+              dispatch({ type: 'CLEAR_HIGHLIGHTS', side: editingCompare ? 'compare' : 'primary' })
+            }
+          >
+            Clear all
+          </button>
+        </div>
       </div>
 
       <div className="toolbox__divider" />
