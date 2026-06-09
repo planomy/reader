@@ -444,8 +444,8 @@ body {
 .toolbox__highlight-kit {
   display: flex;
   flex-direction: column;
-  gap: 0.45rem;
-  padding: 0.65rem 0.7rem;
+  gap: 0.4rem;
+  padding: 0.55rem 0.55rem;
   border-radius: var(--radius-md);
   background: rgba(0, 0, 0, 0.14);
   border: 1px solid rgba(255, 255, 255, 0.12);
@@ -486,12 +486,35 @@ body {
 
 .toolbox__chip-row {
   display: flex;
-  flex-wrap: wrap;
-  gap: 0.3rem;
-  padding: 0.3rem;
+  flex-direction: column;
+  gap: 0.28rem;
+  padding: 0.28rem;
   border-radius: 12px;
   background: rgba(255, 255, 255, 0.06);
   border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.toolbox__chip-row-main {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.28rem;
+}
+
+.toolbox .chip--block {
+  width: 100%;
+  text-align: center;
+  padding: 0.28rem 0.45rem;
+  font-size: 0.62rem;
+}
+
+.toolbox__chip-row-main .chip {
+  width: 100%;
+  text-align: center;
+  padding: 0.28rem 0.35rem;
+  font-size: 0.6rem;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 .chip {
@@ -511,7 +534,8 @@ body {
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.14);
   color: rgba(255, 255, 255, 0.9);
-  padding: 0.32rem 0.6rem;
+  padding: 0.28rem 0.45rem;
+  font-size: 0.62rem;
 }
 
 .toolbox .chip:hover {
@@ -606,25 +630,25 @@ body {
 .toolbox .color-picker--row {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
-  gap: 0.25rem;
-  padding: 0.35rem;
-  border-radius: 12px;
+  gap: 0.2rem;
+  padding: 0.28rem;
+  border-radius: 10px;
   background: rgba(255, 255, 255, 0.05);
   border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .color-swatch-btn {
   display: flex;
-  flex-direction: column;
   align-items: center;
-  gap: 0.28rem;
-  padding: 0.35rem 0.15rem 0.3rem;
+  justify-content: center;
+  padding: 0.2rem;
   border: none;
-  border-radius: 10px;
+  border-radius: 8px;
   background: transparent;
   cursor: pointer;
   font-family: inherit;
   transition: background 0.15s;
+  min-width: 0;
 }
 
 .color-swatch-btn:hover {
@@ -634,18 +658,6 @@ body {
 .color-swatch-btn--active {
   background: rgba(255, 255, 255, 0.14);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.18);
-}
-
-.color-swatch-btn__label {
-  font-size: 0.52rem;
-  font-weight: 700;
-  letter-spacing: 0.02em;
-  color: var(--sidebar-fg-muted);
-  line-height: 1;
-}
-
-.color-swatch-btn--active .color-swatch-btn__label {
-  color: #fff;
 }
 
 .toolbox__brand {
@@ -1031,23 +1043,25 @@ body {
 }
 
 .color-swatch {
-  width: 26px;
-  height: 26px;
-  border-radius: 50%;
-  border: 2px solid rgba(255, 255, 255, 0.25);
+  width: 100%;
+  max-width: 1.35rem;
+  aspect-ratio: 1;
+  border-radius: 6px;
+  border: 1.5px solid rgba(255, 255, 255, 0.28);
   transition: transform 0.15s, box-shadow 0.15s, border-color 0.15s;
-  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.22);
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
   pointer-events: none;
+  display: block;
 }
 
 .color-swatch-btn--active .color-swatch {
   border-color: #fff;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.2), 0 3px 10px rgba(0, 0, 0, 0.28);
-  transform: scale(1.06);
+  box-shadow: 0 0 0 1.5px rgba(255, 255, 255, 0.22), 0 2px 6px rgba(0, 0, 0, 0.24);
+  transform: scale(1.05);
 }
 
 .color-swatch-btn:hover .color-swatch {
-  transform: scale(1.04);
+  transform: scale(1.03);
 }
 
 .color-swatch--yellow { background: #facc15; }
