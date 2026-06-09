@@ -324,17 +324,23 @@ export function useDocument() {
 
   const addHighlight = useCallback(
     (start: number, end: number, color: HighlightColor, side: 'primary' | 'compare' = 'primary') => {
+      const slide = getActiveSlide(state)
+      const text = side === 'compare' ? slide.compareText : slide.text
+      const clampedStart = Math.max(0, Math.min(start, text.length))
+      const clampedEnd = Math.max(0, Math.min(end, text.length))
+      if (clampedStart >= clampedEnd) return
+
       pushHistory()
       const highlight: Highlight = {
         id: uid(),
-        start,
-        end,
+        start: clampedStart,
+        end: clampedEnd,
         color,
-        hidden: state.answerKeyMode || undefined,
+        hidden: state.answerKeyMode ? true : undefined,
       }
       dispatch({ type: 'ADD_HIGHLIGHT', highlight, side })
     },
-    [pushHistory, state.answerKeyMode],
+    [pushHistory, state],
   )
 
   const setAnnotation = useCallback(

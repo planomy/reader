@@ -1008,6 +1008,78 @@ body {
   cursor: pointer;
 }
 
+.selection-preview-layer {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 20;
+}
+
+.selection-preview {
+  position: fixed;
+  border-radius: 3px;
+  pointer-events: none;
+}
+
+.selection-preview--answer {
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 210, 80, 0.85),
+    rgba(255, 210, 80, 0.85) 4px,
+    rgba(255, 255, 255, 0.4) 4px,
+    rgba(255, 255, 255, 0.4) 8px
+  );
+  box-shadow: inset 0 0 0 1px rgba(255, 210, 80, 0.6);
+}
+
+.text-canvas__body--selectable ::selection {
+  background: transparent;
+  color: inherit;
+}
+
+.text-canvas__body--selectable ::-moz-selection {
+  background: transparent;
+  color: inherit;
+}
+
+.hl--preview-answer {
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 210, 80, 0.75),
+    rgba(255, 210, 80, 0.75) 4px,
+    rgba(255, 255, 255, 0.35) 4px,
+    rgba(255, 255, 255, 0.35) 8px
+  ) !important;
+  color: var(--text) !important;
+  border-radius: 3px;
+  padding: 0 2px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  font-weight: 600;
+}
+
+.text-canvas__body::selection {
+  background-color: var(--selection-bg, rgba(168, 85, 247, 0.45));
+  color: var(--selection-fg, inherit);
+}
+
+.text-canvas--answer-key .text-canvas__body::selection {
+  background: repeating-linear-gradient(
+    -45deg,
+    rgba(255, 210, 80, 0.55),
+    rgba(255, 210, 80, 0.55) 5px,
+    rgba(255, 255, 255, 0.22) 5px,
+    rgba(255, 255, 255, 0.22) 10px
+  );
+  color: var(--text);
+  -webkit-text-fill-color: var(--text);
+}
+
+.text-canvas--answer-key .text-canvas__body::-moz-selection {
+  background: rgba(255, 210, 80, 0.45);
+  color: var(--text);
+}
+
 .text-canvas--lined .text-canvas__body {
   overflow: visible;
 }
@@ -1075,14 +1147,19 @@ body {
 
 .hl--hidden-answer {
   background: repeating-linear-gradient(
-    45deg,
-    var(--surface-2),
-    var(--surface-2) 4px,
-    var(--border) 4px,
-    var(--border) 8px
+    -45deg,
+    rgba(255, 210, 80, 0.75),
+    rgba(255, 210, 80, 0.75) 4px,
+    rgba(255, 255, 255, 0.35) 4px,
+    rgba(255, 255, 255, 0.35) 8px
   ) !important;
-  color: transparent;
+  color: var(--text) !important;
   border-radius: 3px;
+  padding: 0 1px;
+  margin: 0 -1px;
+  box-decoration-break: clone;
+  -webkit-box-decoration-break: clone;
+  font-weight: 600;
 }
 
 .annotated {

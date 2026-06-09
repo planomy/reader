@@ -171,6 +171,8 @@ export default function App() {
           focusLine={state.focusLine}
           showLineNumbers={state.showLineNumbers}
           answersHidden={state.answersHidden}
+          answerKeyMode={state.answerKeyMode}
+          activeColor={activeColor}
           label={state.compareMode ? 'Original' : undefined}
           disabled={state.penTool}
           onHighlight={(s, e) => handleHighlight(s, e, 'primary')}
@@ -190,6 +192,8 @@ export default function App() {
             focusLine={false}
             showLineNumbers={state.showLineNumbers}
             answersHidden={state.answersHidden}
+            answerKeyMode={state.answerKeyMode}
+            activeColor={activeColor}
             label="Compare"
             disabled={state.penTool}
             onHighlight={(s, e) => handleHighlight(s, e, 'compare')}
