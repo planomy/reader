@@ -14,6 +14,7 @@ export const KEYBOARD_SHORTCUTS = [
   { keys: 'X', label: 'Clear pen (when pen is on)' },
   { keys: 'Esc', label: 'Close popup / exit clean view' },
   { keys: '⌘Z', label: 'Undo highlight' },
+  { keys: '⌘S', label: 'Save lesson' },
   { keys: '?', label: 'Show this list' },
 ] as const
 
@@ -32,6 +33,7 @@ interface UseKeyboardShortcutsOptions {
   penTool: boolean
   onEscape: () => void
   onToggleHelp: () => void
+  onSave: () => void
 }
 
 export function useKeyboardShortcuts({
@@ -42,6 +44,7 @@ export function useKeyboardShortcuts({
   penTool,
   onEscape,
   onToggleHelp,
+  onSave,
 }: UseKeyboardShortcutsOptions) {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -64,6 +67,12 @@ export function useKeyboardShortcuts({
           e.preventDefault()
           onUndo()
         }
+        return
+      }
+
+      if (mod && key === 's') {
+        e.preventDefault()
+        onSave()
         return
       }
 
@@ -113,5 +122,5 @@ export function useKeyboardShortcuts({
 
     window.addEventListener('keydown', handleKeyDown)
     return () => window.removeEventListener('keydown', handleKeyDown)
-  }, [dispatch, canUndo, onUndo, onClearPen, penTool, onEscape, onToggleHelp])
+  }, [dispatch, canUndo, onUndo, onClearPen, penTool, onEscape, onToggleHelp, onSave])
 }

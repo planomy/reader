@@ -22,6 +22,7 @@ import { useKeyboardShortcuts } from './hooks/useKeyboardShortcuts'
 import type { FontFamily, HighlightColor, WordAnnotation } from './types'
 import { getActiveSlide } from './types'
 import { captureStage, exportStagePdf, exportStagePng } from './utils/export'
+import { openDocumentFile, saveDocumentFile } from './utils/documentFile'
 import { uid } from './utils/text'
 
 const FONT_CLASSES: Record<FontFamily, string> = {
@@ -55,6 +56,7 @@ export default function App() {
   const [copied, setCopied] = useState(false)
   const [showImages, setShowImages] = useState(slide.images.length > 0)
   const [showShortcuts, setShowShortcuts] = useState(false)
+  const [fileNotice, setFileNotice] = useState<string | null>(null)
 
   const activeSide = state.compareMode && state.compareSide === 'compare' ? 'compare' : 'primary'
   const annotations = activeSide === 'compare' ? slide.compareAnnotations : slide.annotations
@@ -94,6 +96,31 @@ export default function App() {
     await copyText()
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
+  }
+
+  const flashNotice = (message: string) => {
+    setFileNotice(message)
+    setTimeout(() => setFileNotice(null), 2500)
+  }
+
+  const handleSave = async () => {
+    try {
+      const result = await saveDocumentFile(state, slide.title)
+      if (result === 'saved') flashNotice('Lesson saved')
+    } catch {
+      flashNotice('Could not save file')
+    }
+  }
+
+  const handleOpen = async () => {
+    try {
+      const loaded = await openDocumentFile()
+      if (!loaded) return
+      dispatch({ type: 'LOAD_STATE', state: loaded })
+      flashNotice('Lesson opened')
+    } catch {
+      flashNotice('Could not open file')
+    }
   }
 
   const handleExportPng = async () => {
@@ -141,6 +168,7 @@ export default function App() {
     penTool: state.penTool,
     onEscape: handleEscape,
     onToggleHelp: () => setShowShortcuts((v) => !v),
+    onSave: handleSave,
   })
 
   const handleAddSticky = () => {
@@ -253,6 +281,8 @@ export default function App() {
           activeColor={activeColor}
           onColorChange={setActiveColor}
           onPasteText={(text, side) => dispatch({ type: 'SET_TEXT', text, side })}
+          onSave={handleSave}
+          onOpen={handleOpen}
           onCopy={handleCopy}
           onUndo={undo}
           canUndo={canUndo}
@@ -267,6 +297,7 @@ export default function App() {
           onToggleVocab={() => setShowVocab((v) => !v)}
           timer={timer}
           copied={copied}
+          fileNotice={fileNotice}
         />
       )}
 

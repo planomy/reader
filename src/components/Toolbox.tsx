@@ -62,6 +62,8 @@ interface ToolboxProps {
   onColorChange: (color: HighlightColor) => void
   onPasteText: (text: string, side?: 'primary' | 'compare') => void
   onCopy: () => void
+  onSave: () => void
+  onOpen: () => void
   onUndo: () => void
   canUndo: boolean
   onAddImage: () => void
@@ -81,6 +83,7 @@ interface ToolboxProps {
     setDuration: (s: number) => void
   }
   copied: boolean
+  fileNotice?: string | null
 }
 
 export function Toolbox({
@@ -90,6 +93,8 @@ export function Toolbox({
   onColorChange,
   onPasteText,
   onCopy,
+  onSave,
+  onOpen,
   onUndo,
   canUndo,
   onAddImage,
@@ -103,269 +108,283 @@ export function Toolbox({
   onToggleVocab,
   timer,
   copied,
+  fileNotice,
 }: ToolboxProps) {
   const [tab, setTab] = useState<ToolboxTab>('text')
   const slide = getActiveSlide(state)
   const editingCompare = state.compareMode && state.compareSide === 'compare'
 
-  return (
-    <aside className="toolbox">
-      <div className="toolbox__header">
-        <div className="toolbox__brand">
-          <img
-            src={`${import.meta.env.BASE_URL}logo.png`}
-            alt="Reader"
-            className="toolbox__logo-img"
-          />
+  const renderTextPanel = () => (
+    <div className="toolbox__panel">
+      {state.compareMode && (
+        <div className="toolbox__seg">
+          <button
+            type="button"
+            className={`toolbox__seg-btn ${!editingCompare ? 'toolbox__seg-btn--active' : ''}`}
+            onClick={() => dispatch({ type: 'SET_COMPARE_SIDE', side: 'primary' })}
+          >
+            Original
+          </button>
+          <button
+            type="button"
+            className={`toolbox__seg-btn ${editingCompare ? 'toolbox__seg-btn--active' : ''}`}
+            onClick={() => dispatch({ type: 'SET_COMPARE_SIDE', side: 'compare' })}
+          >
+            Compare
+          </button>
         </div>
-        <nav className="toolbox__tabs" aria-label="Toolbox sections">
-          {TABS.map(({ id, label }) => (
-            <button
-              key={id}
-              type="button"
-              className={`toolbox__tab ${tab === id ? 'toolbox__tab--active' : ''}`}
-              onClick={() => setTab(id)}
-            >
-              {label}
-            </button>
-          ))}
-        </nav>
+      )}
+      <textarea
+        className="paste-area paste-area--compact"
+        placeholder={editingCompare ? 'Paste comparison text…' : 'Paste your paragraph…'}
+        value={editingCompare ? slide.compareText : slide.text}
+        onChange={(e) =>
+          onPasteText(e.target.value, editingCompare ? 'compare' : 'primary')
+        }
+        rows={3}
+      />
+      <div className="toolbox__toolbar">
+        <button type="button" className="btn btn--sm btn--primary" onClick={onSave}>
+          Save
+        </button>
+        <button type="button" className="btn btn--sm" onClick={onOpen}>
+          Open
+        </button>
+        <button type="button" className="btn btn--sm btn--ghost" onClick={onCopy}>
+          {copied ? '✓ Copied' : 'Copy'}
+        </button>
+        <button type="button" className="btn btn--sm btn--ghost" onClick={onUndo} disabled={!canUndo}>
+          Undo
+        </button>
+        <button type="button" className="btn btn--sm btn--ghost" onClick={() => dispatch({ type: 'ADD_SLIDE' })}>
+          + Passage
+        </button>
       </div>
+      {fileNotice && <p className="toolbox__notice">{fileNotice}</p>}
+      <details className="toolbox__fold">
+        <summary>Lesson library</summary>
+        <LessonLibrary state={state} onLoad={onLoadLesson} />
+      </details>
+    </div>
+  )
 
-      <div className="toolbox__body">
-        {tab === 'text' && (
-          <div className="toolbox__panel">
-            {state.compareMode && (
-              <div className="toolbox__seg">
-                <button
-                  type="button"
-                  className={`toolbox__seg-btn ${!editingCompare ? 'toolbox__seg-btn--active' : ''}`}
-                  onClick={() => dispatch({ type: 'SET_COMPARE_SIDE', side: 'primary' })}
-                >
-                  Original
-                </button>
-                <button
-                  type="button"
-                  className={`toolbox__seg-btn ${editingCompare ? 'toolbox__seg-btn--active' : ''}`}
-                  onClick={() => dispatch({ type: 'SET_COMPARE_SIDE', side: 'compare' })}
-                >
-                  Compare
-                </button>
-              </div>
-            )}
-            <textarea
-              className="paste-area paste-area--compact"
-              placeholder={editingCompare ? 'Paste comparison text…' : 'Paste your paragraph…'}
-              value={editingCompare ? slide.compareText : slide.text}
-              onChange={(e) =>
-                onPasteText(e.target.value, editingCompare ? 'compare' : 'primary')
-              }
-              rows={3}
-            />
-            <div className="toolbox__toolbar">
-              <button type="button" className="btn btn--sm" onClick={onCopy}>
-                {copied ? '✓ Copied' : 'Copy'}
-              </button>
-              <button type="button" className="btn btn--sm btn--ghost" onClick={onUndo} disabled={!canUndo}>
-                Undo
-              </button>
-              <button type="button" className="btn btn--sm btn--ghost" onClick={() => dispatch({ type: 'ADD_SLIDE' })}>
-                + Passage
-              </button>
-            </div>
-            <details className="toolbox__fold">
-              <summary>Lesson library</summary>
-              <LessonLibrary state={state} onLoad={onLoadLesson} />
-            </details>
-          </div>
-        )}
-
-        {tab === 'present' && (
-          <div className="toolbox__panel">
-            <p className="toolbox__micro">Select text, then pick a color</p>
-            <div className="color-picker color-picker--row">
-              {HIGHLIGHT_COLORS.map(({ color, label }) => (
-                <button
-                  key={color}
-                  type="button"
-                  className={`color-swatch color-swatch--${color} ${activeColor === color ? 'active' : ''}`}
-                  title={label}
-                  aria-label={label}
-                  onClick={() => onColorChange(color)}
-                />
-              ))}
-            </div>
-            <div className="toolbox__chips">
-              <ChipToggle
-                label="Answer key"
-                active={state.answerKeyMode}
-                onClick={() => dispatch({ type: 'TOGGLE_ANSWER_KEY_MODE' })}
-                hint="New highlights hidden until you reveal answers"
-              />
-              <ChipToggle
-                label={state.answersHidden ? 'Show answers' : 'Hide answers'}
-                active={!state.answersHidden}
-                onClick={() => dispatch({ type: 'TOGGLE_ANSWERS_HIDDEN' })}
-                hint="Toggle answer-key highlights"
-              />
-              <button
-                type="button"
-                className="chip chip--ghost"
-                onClick={() =>
-                  dispatch({ type: 'CLEAR_HIGHLIGHTS', side: editingCompare ? 'compare' : 'primary' })
-                }
-              >
-                Clear all
-              </button>
-            </div>
-
-            <div className="toolbox__divider" />
-
-            <div className="tool-icon-grid">
-              {PRESENT_TOOLS.map(({ label, glyph, hint, active, action }) => (
-                <IconTool
-                  key={label}
-                  glyph={glyph}
-                  label={label}
-                  hint={hint}
-                  active={active(state)}
-                  onClick={() => dispatch(action)}
-                />
-              ))}
-            </div>
-            {state.revealMode && (
-              <div className="toolbox__toolbar">
-                <button type="button" className="btn btn--sm" onClick={() => dispatch({ type: 'REVEAL_ALL' })}>
-                  Reveal all
-                </button>
-                <button type="button" className="btn btn--sm btn--ghost" onClick={() => dispatch({ type: 'RESET_REVEAL' })}>
-                  Reset
-                </button>
-              </div>
-            )}
-            <div className="toolbox__toolbar">
-              <button type="button" className="btn btn--sm btn--ghost" onClick={onFreeze}>
-                {state.frozen ? 'Unfreeze' : 'Freeze'}
-              </button>
-              <button type="button" className="btn btn--sm btn--ghost" onClick={onClearPen}>
-                Clear pen
-              </button>
-            </div>
-
-            <details className="toolbox__fold">
-              <summary>Keyboard shortcuts (?)</summary>
-              <dl className="shortcuts-list shortcuts-list--compact">
-                {KEYBOARD_SHORTCUTS.map(({ keys, label }) => (
-                  <div key={keys} className="shortcuts-list__row">
-                    <dt><kbd>{keys}</kbd></dt>
-                    <dd>{label}</dd>
-                  </div>
-                ))}
-              </dl>
-            </details>
-          </div>
-        )}
-
-        {tab === 'more' && (
-          <div className="toolbox__panel toolbox__panel--stack">
-            <details className="toolbox__fold toolbox__fold--open" open>
-              <summary>Look</summary>
-              <div className="toolbox__pair">
-                <label className="toolbox__mini">
-                  Theme
-                  <select
-                    value={state.backgroundTheme}
-                    onChange={(e) =>
-                      dispatch({ type: 'SET_BACKGROUND', backgroundTheme: e.target.value as BackgroundTheme })
-                    }
-                  >
-                    {BACKGROUNDS.map((b) => (
-                      <option key={b.id} value={b.id}>{b.label}</option>
-                    ))}
-                  </select>
-                </label>
-                <label className="toolbox__mini">
-                  Font
-                  <select
-                    value={state.font}
-                    onChange={(e) => dispatch({ type: 'SET_FONT', font: e.target.value as FontFamily })}
-                  >
-                    {FONTS.map((f) => (
-                      <option key={f.id} value={f.id}>{f.label}</option>
-                    ))}
-                  </select>
-                </label>
-              </div>
-              <label className="toolbox__mini">
-                Size — {state.fontSize}px
-                <input
-                  type="range"
-                  min={18}
-                  max={48}
-                  value={state.fontSize}
-                  onChange={(e) => dispatch({ type: 'SET_FONT_SIZE', fontSize: Number(e.target.value) })}
-                />
-              </label>
-              <label className="toolbox__mini">
-                Spacing — {state.lineHeight.toFixed(1)}
-                <input
-                  type="range"
-                  min={1.2}
-                  max={2.4}
-                  step={0.1}
-                  value={state.lineHeight}
-                  onChange={(e) => dispatch({ type: 'SET_LINE_HEIGHT', lineHeight: Number(e.target.value) })}
-                />
-              </label>
-            </details>
-
-            <details className="toolbox__fold">
-              <summary>Media & notes</summary>
-              <div className="toolbox__toolbar">
-                <button type="button" className="btn btn--sm btn--full" onClick={onAddImage}>
-                  + Image
-                </button>
-                <button type="button" className="btn btn--sm btn--full" onClick={onAddSticky}>
-                  + Sticky
-                </button>
-              </div>
-            </details>
-
-            <details className="toolbox__fold">
-              <summary>Timer</summary>
-              <TimerWidget
-                compact
-                seconds={timer.seconds}
-                running={timer.running}
-                onToggle={timer.toggle}
-                onReset={timer.reset}
-                onSetDuration={timer.setDuration}
-              />
-            </details>
-
-            <details className="toolbox__fold">
-              <summary>Export & vocab</summary>
-              <div className="toolbox__toolbar">
-                <button type="button" className="btn btn--sm" onClick={onExportPng}>PNG</button>
-                <button type="button" className="btn btn--sm" onClick={onExportPdf}>PDF</button>
-                <button type="button" className="btn btn--sm btn--ghost" onClick={onToggleVocab}>
-                  {showVocab ? 'Hide vocab' : 'Vocab'}
-                </button>
-              </div>
-            </details>
-          </div>
-        )}
+  const renderPresentPanel = () => (
+    <div className="toolbox__panel">
+      <p className="toolbox__micro">Select text, then pick a color</p>
+      <div className="color-picker color-picker--row">
+        {HIGHLIGHT_COLORS.map(({ color, label }) => (
+          <button
+            key={color}
+            type="button"
+            className={`color-swatch color-swatch--${color} ${activeColor === color ? 'active' : ''}`}
+            title={label}
+            aria-label={label}
+            onClick={() => onColorChange(color)}
+          />
+        ))}
       </div>
-
-      <div className="toolbox__footer">
+      <div className="toolbox__chips">
+        <ChipToggle
+          label="Answer key"
+          active={state.answerKeyMode}
+          onClick={() => dispatch({ type: 'TOGGLE_ANSWER_KEY_MODE' })}
+          hint="New highlights hidden until you reveal answers"
+        />
+        <ChipToggle
+          label={state.answersHidden ? 'Show answers' : 'Hide answers'}
+          active={!state.answersHidden}
+          onClick={() => dispatch({ type: 'TOGGLE_ANSWERS_HIDDEN' })}
+          hint="Toggle answer-key highlights"
+        />
         <button
           type="button"
-          className={`btn btn--full ${state.presentationMode ? 'btn--primary' : ''}`}
-          onClick={() => dispatch({ type: 'TOGGLE_PRESENTATION' })}
+          className="chip chip--ghost"
+          onClick={() =>
+            dispatch({ type: 'CLEAR_HIGHLIGHTS', side: editingCompare ? 'compare' : 'primary' })
+          }
         >
-          {state.presentationMode ? 'Exit clean view' : '⛶ Clean view'}
+          Clear all
         </button>
-        <p className="toolbox__credit">Created by Mr C 2026</p>
+      </div>
+
+      <div className="toolbox__divider" />
+
+      <div className="tool-icon-grid">
+        {PRESENT_TOOLS.map(({ label, glyph, hint, active, action }) => (
+          <IconTool
+            key={label}
+            glyph={glyph}
+            label={label}
+            hint={hint}
+            active={active(state)}
+            onClick={() => dispatch(action)}
+          />
+        ))}
+      </div>
+      {state.revealMode && (
+        <div className="toolbox__toolbar">
+          <button type="button" className="btn btn--sm" onClick={() => dispatch({ type: 'REVEAL_ALL' })}>
+            Reveal all
+          </button>
+          <button type="button" className="btn btn--sm btn--ghost" onClick={() => dispatch({ type: 'RESET_REVEAL' })}>
+            Reset
+          </button>
+        </div>
+      )}
+      <div className="toolbox__toolbar">
+        <button type="button" className="btn btn--sm btn--ghost" onClick={onFreeze}>
+          {state.frozen ? 'Unfreeze' : 'Freeze'}
+        </button>
+        <button type="button" className="btn btn--sm btn--ghost" onClick={onClearPen}>
+          Clear pen
+        </button>
+      </div>
+
+      <details className="toolbox__fold">
+        <summary>Keyboard shortcuts (?)</summary>
+        <dl className="shortcuts-list shortcuts-list--compact">
+          {KEYBOARD_SHORTCUTS.map(({ keys, label }) => (
+            <div key={keys} className="shortcuts-list__row">
+              <dt><kbd>{keys}</kbd></dt>
+              <dd>{label}</dd>
+            </div>
+          ))}
+        </dl>
+      </details>
+    </div>
+  )
+
+  const renderMorePanel = () => (
+    <div className="toolbox__panel toolbox__panel--stack">
+      <details className="toolbox__fold toolbox__fold--open" open>
+        <summary>Look</summary>
+        <div className="toolbox__pair">
+          <label className="toolbox__mini">
+            Theme
+            <select
+              value={state.backgroundTheme}
+              onChange={(e) =>
+                dispatch({ type: 'SET_BACKGROUND', backgroundTheme: e.target.value as BackgroundTheme })
+              }
+            >
+              {BACKGROUNDS.map((b) => (
+                <option key={b.id} value={b.id}>{b.label}</option>
+              ))}
+            </select>
+          </label>
+          <label className="toolbox__mini">
+            Font
+            <select
+              value={state.font}
+              onChange={(e) => dispatch({ type: 'SET_FONT', font: e.target.value as FontFamily })}
+            >
+              {FONTS.map((f) => (
+                <option key={f.id} value={f.id}>{f.label}</option>
+              ))}
+            </select>
+          </label>
+        </div>
+        <label className="toolbox__mini">
+          Size — {state.fontSize}px
+          <input
+            type="range"
+            min={18}
+            max={48}
+            value={state.fontSize}
+            onChange={(e) => dispatch({ type: 'SET_FONT_SIZE', fontSize: Number(e.target.value) })}
+          />
+        </label>
+        <label className="toolbox__mini">
+          Spacing — {state.lineHeight.toFixed(1)}
+          <input
+            type="range"
+            min={1.2}
+            max={2.4}
+            step={0.1}
+            value={state.lineHeight}
+            onChange={(e) => dispatch({ type: 'SET_LINE_HEIGHT', lineHeight: Number(e.target.value) })}
+          />
+        </label>
+      </details>
+
+      <details className="toolbox__fold">
+        <summary>Media & notes</summary>
+        <div className="toolbox__toolbar">
+          <button type="button" className="btn btn--sm btn--full" onClick={onAddImage}>
+            + Image
+          </button>
+          <button type="button" className="btn btn--sm btn--full" onClick={onAddSticky}>
+            + Sticky
+          </button>
+        </div>
+      </details>
+
+      <details className="toolbox__fold">
+        <summary>Timer</summary>
+        <TimerWidget
+          compact
+          seconds={timer.seconds}
+          running={timer.running}
+          onToggle={timer.toggle}
+          onReset={timer.reset}
+          onSetDuration={timer.setDuration}
+        />
+      </details>
+
+      <details className="toolbox__fold">
+        <summary>Export & vocab</summary>
+        <div className="toolbox__toolbar">
+          <button type="button" className="btn btn--sm" onClick={onExportPng}>PNG</button>
+          <button type="button" className="btn btn--sm" onClick={onExportPdf}>PDF</button>
+          <button type="button" className="btn btn--sm btn--ghost" onClick={onToggleVocab}>
+            {showVocab ? 'Hide vocab' : 'Vocab'}
+          </button>
+        </div>
+      </details>
+    </div>
+  )
+
+  return (
+    <aside className="toolbox-shell">
+      <div className="toolbox">
+        <div className="toolbox__header">
+          <div className="toolbox__brand">
+            <img
+              src={`${import.meta.env.BASE_URL}logo.png`}
+              alt="Reader"
+              className="toolbox__logo-img"
+            />
+          </div>
+          <nav className="toolbox__tabs" aria-label="Toolbox sections">
+            {TABS.map(({ id, label }) => (
+              <button
+                key={id}
+                type="button"
+                className={`toolbox__tab ${tab === id ? 'toolbox__tab--active' : ''}`}
+                onClick={() => setTab(id)}
+              >
+                {label}
+              </button>
+            ))}
+          </nav>
+        </div>
+
+        <div className="toolbox__body">
+          {tab === 'text' && renderTextPanel()}
+          {tab === 'present' && renderPresentPanel()}
+          {tab === 'more' && renderMorePanel()}
+        </div>
+
+        <div className="toolbox__footer">
+          <button
+            type="button"
+            className={`btn btn--full ${state.presentationMode ? 'btn--primary' : ''}`}
+            onClick={() => dispatch({ type: 'TOGGLE_PRESENTATION' })}
+          >
+            {state.presentationMode ? 'Exit clean view' : '⛶ Clean view'}
+          </button>
+          <p className="toolbox__credit">Created by Mr C 2026</p>
+        </div>
       </div>
     </aside>
   )
