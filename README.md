@@ -11,7 +11,9 @@ npm run dev
 
 ## Deploy (GitHub Pages)
 
-Push to `main` on `planomy/reader`. GitHub Actions builds and deploys automatically.
+1. Build: `npm run build` (outputs to `docs/`)
+2. Commit and push `docs/` to `main`
+3. Repo **Settings → Pages → Build from branch `main` → folder `/docs`**
 
 Live at: **https://planomy.github.io/reader/**
 
